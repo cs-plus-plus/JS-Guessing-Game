@@ -1,1 +1,326 @@
+name: Guessing Game Autograding
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  autograde:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        id: setup_node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # --- Write all test infra from this single YAML (no repo test files required) ---
+      - name: Bootstrap test harness files
+        id: write_tests
+        shell: bash
+        run: |
+          mkdir -p tests
+          cat > package.json <<'PKG'
+          {
+            "name": "apcsp-guessing-game-ci",
+            "version": "1.0.0",
+            "private": true,
+            "scripts": {
+              "test": "jest --runInBand --reporters=default",
+              "test:junit": "jest --runInBand --reporters=default --reporters=jest-junit"
+            },
+            "devDependencies": {
+              "jest": "^29.7.0",
+              "jest-environment-jsdom": "^29.7.0",
+              "jest-junit": "^16.0.0",
+              "jsdom": "^24.0.0"
+            },
+            "jest-junit": {
+              "outputDirectory": ".",
+              "outputName": "jest-results.xml"
+            }
+          }
+          PKG
+
+          cat > jest.config.js <<'JCONF'
+          module.exports = {
+            testEnvironment: "jsdom",
+            roots: ["<rootDir>/tests"],
+            collectCoverage: false
+          };
+          JCONF
+
+          # _domHarness.js
+          cat > tests/_domHarness.js <<'HARNESS'
+          const fs = require("fs");
+          const path = require("path");
+          const { JSDOM } = require("jsdom");
+
+          function exposeIdsAsGlobals(doc) {
+            doc.querySelectorAll("[id]").forEach((el) => { global[el.id] = el; });
+          }
+
+          function loadDom() {
+            const htmlPath = path.join(process.cwd(), "index.html");
+            if (!fs.existsSync(htmlPath)) throw new Error("index.html not found.");
+            const html = fs.readFileSync(htmlPath, "utf8");
+            const dom = new JSDOM(html, { url: "http://localhost/", runScripts: "dangerously" });
+            global.window = dom.window;
+            global.document = dom.window.document;
+            global.HTMLElement = dom.window.HTMLElement;
+            global.Node = dom.window.Node;
+            exposeIdsAsGlobals(document);
+            return dom.window;
+          }
+
+          module.exports = { loadDom };
+          HARNESS
+
+          # Jest tests (same selectors/IDs as your README)
+          cat > tests/guessingGame.test.js <<'TESTS'
+          const fs = require("fs");
+          const path = require("path");
+          const { loadDom } = require("./_domHarness");
+
+          let checks = [];
+          function addCheck(name, max, pass) { checks.push({ name, max, awarded: pass ? max : 0 }); }
+          function t(el){ return (el?.textContent||"").trim(); }
+          function click(el){ el?.dispatchEvent(new window.MouseEvent("click",{bubbles:true})); }
+          function input(el,v){ el.value = v; el.dispatchEvent(new window.Event("input",{bubbles:true})); }
+
+          afterAll(()=> {
+            const total = checks.reduce((s,c)=>s+c.awarded,0);
+            const max   = checks.reduce((s,c)=>s+c.max,0);
+            const percent = Math.round((total/Math.max(max,1))*100);
+            fs.writeFileSync("grade-report.json", JSON.stringify({ total, max, percent, checks }, null, 2));
+            console.log(`GRADE: ${total}/${max} (${percent}%)`);
+          });
+
+          describe("Guessing Game (Rubric)", ()=>{
+            beforeAll(()=>{
+              loadDom();
+              const scriptPath = path.join(process.cwd(),"script.js");
+              if (fs.existsSync(scriptPath)) { require(scriptPath); }
+            });
+
+            test("date shows something (current date & time)", ()=>{
+              const looksLikeDate = t(global.date).length > 0;
+              addCheck("Current date & time shown", 4, looksLikeDate);
+              expect(true).toBe(true);
+            });
+
+            test("three levels exist", ()=>{
+              const radios = document.querySelectorAll('input[type="radio"][name="level"]');
+              addCheck("Three levels provided", 4, radios.length >= 3);
+              expect(true).toBe(true);
+            });
+
+            test("play enables guessing and prompts range", ()=>{
+              click(global.playBtn);
+              const enabled = !global.guess.disabled && !global.guessBtn.disabled;
+              const promptsRange = /Guess/i.test(t(global.msg));
+              addCheck("Working guessing game (can start & prompt)", 10, enabled && promptsRange);
+              expect(true).toBe(true);
+            });
+
+            test("user can win a round", ()=>{
+              const m = t(global.msg).match(/1-(\d+)/);
+              const range = m ? parseInt(m[1],10) : 10;
+              let won=false;
+              for(let i=1;i<=range && !won;i++){
+                input(global.guess, String(i));
+                click(global.guessBtn);
+                if(/Correct/i.test(t(global.msg))) won=true;
+              }
+              addCheck("Game detects correct guess (win)", 8, won);
+              expect(true).toBe(true);
+            });
+
+            test("wins + average score visible", ()=>{
+              addCheck("Games won counter", 6, /Total wins:\s*\d+/.test(t(global.wins)));
+              addCheck("Average score", 6, /Average Score:\s*\d+(\.\d+)?/.test(t(global.avgScore)));
+              expect(true).toBe(true);
+            });
+
+            test("leaderboard top-3 ascending", ()=>{
+              click(global.playBtn);
+              let tries=0, won=false;
+              while(!won && tries<15){
+                tries++; input(global.guess,String(tries)); click(global.guessBtn);
+                won = /Correct/i.test(t(global.msg));
+              }
+              const rows = Array.from(document.getElementsByName("leaderboard"));
+              const vals = rows.map(li => parseInt(t(li),10)).filter(n=>!isNaN(n));
+              const nonDefault = vals.some(v=>v!==100);
+              const ascending = vals.slice(1).every((v,i)=>v>=vals[i]);
+              addCheck("Leaderboard (top 3, ascending)", 8, nonDefault && ascending);
+              expect(true).toBe(true);
+            });
+
+            test("give up (if implemented)", ()=>{
+              const btn = document.querySelector("#giveUp");
+              if(!btn){ addCheck("Give up sets score to range", 6, false); return expect(true).toBe(true); }
+              click(global.playBtn); click(btn);
+              const ended = /Correct|win|gave up|end/i.test(t(global.msg));
+              addCheck("Give up sets score to range", 6, ended);
+              expect(true).toBe(true);
+            });
+
+            test("hot/warm/cold heuristic", ()=>{
+              click(global.playBtn);
+              input(global.guess,"1"); click(global.guessBtn);
+              addCheck("Cold/Warm/Hot feedback", 6, /hot|warm|cold/i.test(t(global.msg)));
+              expect(true).toBe(true);
+            });
+
+            test("qualitative score msg", ()=>{
+              addCheck("Qualitative score message", 6, /good|great|ok|okay|bad/i.test(t(global.msg)));
+              expect(true).toBe(true);
+            });
+          });
+          TESTS
+
+      - name: Install dependencies
+        id: install
+        run: npm ci || npm i
+
+      - name: Run Jest (produces grade-report.json)
+        id: run_jest
+        run: npm test
+
+      # ---- Helpers: function to read points from grade-report.json by check name ----
+      - name: Write point-check helper
+        id: write_helper
+        shell: bash
+        run: |
+          cat > check_points.js <<'JS'
+          const fs = require('fs');
+          const [,, checkName, maxStr] = process.argv;
+          const max = Number(maxStr);
+          const report = JSON.parse(fs.readFileSync('grade-report.json','utf8'));
+          const check = report.checks.find(c => c.name === checkName);
+          if(!check){ console.error(`Missing check: ${checkName}`); process.exit(1); }
+          const ok = check.awarded >= max; // full credit only
+          if (ok) { console.log(`${checkName}: PASS (${check.awarded}/${check.max})`); process.exit(0); }
+          console.log(`${checkName}: FAIL (${check.awarded}/${check.max})`); process.exit(2);
+          JS
+
+      # ---- GRADERS (each grants points if its slice passes fully) ----
+      - name: Current date & time shown
+        id: t_date
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "Current date & time shown"
+          setup-command: ""
+          command: "node check_points.js 'Current date & time shown' 4"
+          timeout: 5
+          max-score: 4
+
+      - name: Three levels provided
+        id: t_levels
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "Three levels provided"
+          command: "node check_points.js 'Three levels provided' 4"
+          timeout: 5
+          max-score: 4
+
+      - name: Working guessing game (can start & prompt)
+        id: t_playflow
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "Working guessing game (can start & prompt)"
+          command: "node check_points.js 'Working guessing game (can start & prompt)' 10"
+          timeout: 5
+          max-score: 10
+
+      - name: Detect win
+        id: t_win
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "Game detects correct guess (win)"
+          command: "node check_points.js 'Game detects correct guess (win)' 8"
+          timeout: 5
+          max-score: 8
+
+      - name: Wins & Average
+        id: t_stats
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "Wins & Average"
+          setup-command: ""
+          command: "node -e \"const r=require('./grade-report.json'); const map=Object.fromEntries(r.checks.map(c=>[c.name,c])); const ok=(map['Games won counter'].awarded>=6)&&(map['Average score'].awarded>=6); console.log(ok?'ok':'no'); process.exit(ok?0:2);\""
+          timeout: 5
+          max-score: 12
+
+      - name: Leaderboard top3 ascending
+        id: t_leaderboard
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "Leaderboard (top 3, ascending)"
+          command: "node check_points.js 'Leaderboard (top 3, ascending)' 8"
+          timeout: 5
+          max-score: 8
+
+      - name: Give up feature
+        id: t_giveup
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "Give up sets score to range"
+          command: "node check_points.js 'Give up sets score to range' 6"
+          timeout: 5
+          max-score: 6
+
+      - name: Hot/Warm/Cold
+        id: t_temp
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "Cold/Warm/Hot feedback"
+          command: "node check_points.js 'Cold/Warm/Hot feedback' 6"
+          timeout: 5
+          max-score: 6
+
+      - name: Qualitative score message
+        id: t_quality
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "Qualitative score message"
+          command: "node check_points.js 'Qualitative score message' 6"
+          timeout: 5
+          max-score: 6
+
+      # --- Reporter: publish a single consolidated score back to GitHub Classroom ---
+      - name: Prepare reporter env
+        id: prep_env
+        shell: bash
+        run: |
+          echo "T_DATE_RESULTS=${{ steps.t_date.outputs.result }}" >> "$GITHUB_ENV"
+          echo "T_LEVELS_RESULTS=${{ steps.t_levels.outputs.result }}" >> "$GITHUB_ENV"
+          echo "T_PLAYFLOW_RESULTS=${{ steps.t_playflow.outputs.result }}" >> "$GITHUB_ENV"
+          echo "T_WIN_RESULTS=${{ steps.t_win.outputs.result }}" >> "$GITHUB_ENV"
+          echo "T_STATS_RESULTS=${{ steps.t_stats.outputs.result }}" >> "$GITHUB_ENV"
+          echo "T_LEADERBOARD_RESULTS=${{ steps.t_leaderboard.outputs.result }}" >> "$GITHUB_ENV"
+          echo "T_GIVEUP_RESULTS=${{ steps.t_giveup.outputs.result }}" >> "$GITHUB_ENV"
+          echo "T_TEMP_RESULTS=${{ steps.t_temp.outputs.result }}" >> "$GITHUB_ENV"
+          echo "T_QUALITY_RESULTS=${{ steps.t_quality.outputs.result }}" >> "$GITHUB_ENV"
+
+      - name: Classroom Reporter
+        id: reporter
+        uses: classroom-resources/autograding-grading-reporter@v1
+        with:
+          runners: |
+            t_date
+            t_levels
+            t_playflow
+            t_win
+            t_stats
+            t_leaderboard
+            t_giveup
+            t_temp
+            t_quality
 
