@@ -1,16 +1,15 @@
 # 🎯 AP Computer Science Principles Project: JavaScript Number Guessing Game
 
 ## 📘 Overview
-In this project, you’ll design and code a **JavaScript Number Guessing Game** that runs entirely in the browser.  
-Your program must follow the specifications below to meet the rubric and pass the automated GitHub Actions tests.  
+In this project, you’ll design and code a **JavaScript Number Guessing Game** that runs entirely in the browser.
 
 The game should allow the user to:
-- Select a difficulty level  
-- Enter guesses until they get the correct number or give up  
-- Track and display statistics like total wins, average score, and leaderboard  
-- Show the current date and time (continuously updating)  
+- Select a difficulty level
+- Enter guesses until they get the correct number or **Give Up**
+- Track and display statistics like **total wins**, **average score**, **leaderboard**, **fastest game**, and **average time per game**
+- Show the **current date and time** (continuously updating with seconds, correct month name, and day suffix)
 
-Your HTML elements, variable names, and function names must match the specifications below exactly — otherwise, the automated tests will not run correctly.
+Your HTML elements, variable names, and function names must match the specifications below exactly.
 
 ---
 
@@ -21,54 +20,67 @@ Your repository **must include** these two files in the root directory:
 index.html
 script.js
 ```
-
-No additional folders or renaming (e.g., `/src`, `/scripts`) should be used.
-
 ---
 
-## 🧩 Required HTML Structure
+## 🧩 HTML Structure
 
-The tests rely on specific **IDs** and **element names**. Make sure these match exactly, including capitalization.
+The project relies on specific **IDs** and **element names**. Make sure these match exactly, including capitalization.
 
-### Required Elements
+### Elements
 | Feature | HTML Tag | ID / name | Notes |
 |----------|-----------|------------|-------|
-| Display current date and time | `<p>` | `id="date"` | Must show formatted date and live time |
-| Level selector | `<input type="radio" name="level" id="e" value="3">` | name must be `"level"` | You must include **three** levels: Easy, Medium, Hard |
+| Display current date and time | `<p>` | `id="date"` | Must show formatted date with month name + suffix and live time with seconds |
+| Level selector | `<input type="radio" name="level" id="e" value="3">` | name must be `"level"` | Include **three** levels: Easy, Medium, Hard |
 | Play button | `<button>` | `id="playBtn"` | Starts the game and generates random answer |
 | Guess input | `<input>` | `id="guess"` | User types their guess here |
 | Guess button | `<button>` | `id="guessBtn"` | Submits the current guess |
-| Message area | `<h3>` | `id="msg"` | Displays feedback (“Too high”, “Correct”, etc.) |
+| **Give Up** button | `<button>` | `id="giveUpBtn"` | Ends the round immediately and sets score to the range |
+| Message area | `<h3>` | `id="msg"` | Displays feedback (“Too high”, “Correct”, etc.) and qualitative score |
 | Wins display | `<p>` | `id="wins"` | Shows total number of games won |
 | Average score display | `<p>` | `id="avgScore"` | Shows average number of guesses per win |
 | Leaderboard list | `<ol>` | child `<li name="leaderboard">` | Must contain at least three `<li>` items |
-| Optional Give Up button | `<button>` | `id="giveUp"` | Ends the game early and counts as loss |
+| Fastest game display | `<p>` | `id="fastest"` | Show fastest round time |
+| Average time per game | `<p>` | `id="avgTime"` | Show average time across all games |
 
 ### Example Base HTML
+> You may copy this into your `index.html` as a starting point.
+
 ```html
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>JavaScript Number Guessing Game</title>
   </head>
   <body>
+    <h1>Number Guessing Game</h1>
+
     <p id="date"></p>
 
     <h3>Level</h3>
-    <input type="radio" name="level" id="e" value="3" checked><label for="e">Easy</label>
-    <input type="radio" name="level" id="m" value="10"><label for="m">Medium</label>
-    <input type="radio" name="level" id="h" value="100"><label for="h">Hard</label>
+    <input type="radio" name="level" id="e" value="3" checked />
+    <label for="e">Easy</label>
+    <input type="radio" name="level" id="m" value="10" />
+    <label for="m">Medium</label>
+    <input type="radio" name="level" id="h" value="100" />
+    <label for="h">Hard</label>
 
-    <button id="playBtn">Play</button>
+    <div style="margin: 0.5rem 0;">
+      <button id="playBtn">Play</button>
+      <button id="giveUpBtn" disabled>Give Up</button>
+    </div>
 
-    <h3 id="msg">Select a Level</h3>
-    <input type="text" id="guess">
+    <h3 id="msg">Select a Level and press Play</h3>
+
+    <input type="text" id="guess" placeholder="Enter your guess" disabled />
     <button id="guessBtn" disabled>Guess</button>
-    <button id="giveUp" disabled>Give Up</button>
 
     <h3>Stats</h3>
     <p id="wins">Total wins: 0</p>
-    <p id="avgScore">Average Score: </p>
+    <p id="avgScore">Average Score: 0</p>
+    <p id="fastest">Fastest Game: —</p>
+    <p id="avgTime">Average Time per Game: —</p>
 
     <h3>Leaderboard</h3>
     <ol>
@@ -84,162 +96,67 @@ The tests rely on specific **IDs** and **element names**. Make sure these match 
 
 ---
 
-## ⚙️ Required JavaScript Functions and Variables
+## ⚙️ JavaScript Functions and Variables
 
-The test suite expects **specific function names** and global variables.  
-Be sure to use these names exactly.
+Use these **exact** function and variable names.
 
-### Global Variables
-```js
-const levelArr = document.getElementsByName("level");
-let level, answer, score;
-const scoreArr = [];
-```
-
-### Required Functions
-
+### Functions
 | Function | Description | Notes |
 |-----------|--------------|-------|
-| `time()` | Returns formatted date and time as a string | Must use `Date()` and include month name and suffix (e.g., `March 1st, 2025, 2:30:45 PM`) |
-| `play()` | Starts a new game | 1️⃣ Sets `answer` to random number 1–level <br> 2️⃣ Enables guess input/button <br> 3️⃣ Disables play button <br> 4️⃣ Displays “Guess a #1–(level)” |
-| `makeGuess()` | Handles user guess | Compares input to `answer` and updates `msg` |
-| `updateScore()` | Updates total wins, average score, and leaderboard | Sort scores ascending; display top 3 |
-| `reset()` | Resets game controls | Re-enables difficulty radios and Play button |
-| *(Optional)* `giveUp()` | Ends the round immediately | Sets score to range value (equal to level) |
-| *(Optional)* `titleCase(name)` | Converts entered name to “Firstname Lastname” format | Used to personalize messages |
+| `time()` | Returns formatted date and time as a string | Must use `Date()`, month **name**, and day **suffix** (e.g., `March 1st, 2025, 2:30:45 PM`) |
+| `play()` | Starts a new game | 1) Sets `answer` to random 1..level 2) Enables inputs/buttons 3) Disables Play & level radios 4) Displays “Guess a #1–(level)” and records `startMs` |
+| `makeGuess()` | Handles user guess | Compares input to `answer`, shows hot/warm/cold, tracks guesses and win |
+| `updateScore()` | Updates total wins, average score, leaderboard | Sort scores ascending; display top 3 |
+| `updateTimers(endMs)` | Updates fastest and averages | Add `(endMs - startMs)` to totals; update fastest/avg |
+| `reset()` | Resets controls for next round | Re-enables level radios and Play button |
+| `giveUp()` | Ends the round immediately | Sets score to `level` (range value), updates stats/timers |
 
 ### Event Listeners
 ```js
 playBtn.addEventListener("click", play);
 guessBtn.addEventListener("click", makeGuess);
-giveUp.addEventListener("click", giveUp); // optional
-```
-
-### Example `play()` Implementation
-```js
-function play() {
-  score = 0;
-  for (let i = 0; i < levelArr.length; i++) {
-    if (levelArr[i].checked) {
-      level = levelArr[i].value;
-    }
-    levelArr[i].disabled = true;
-  }
-  playBtn.disabled = true;
-  guess.disabled = false;
-  guessBtn.disabled = false;
-  giveUp.disabled = false;
-
-  answer = Math.floor(Math.random() * level) + 1;
-  msg.innerHTML = "Guess a #1-" + level;
-}
+giveUpBtn.addEventListener("click", giveUp);
 ```
 
 ---
 
-## 🧮 Required Game Features
+## 🧮 Minimum Requirements (70 points)
 
-Your program must include these **Minimum Requirements** to earn a full base score (70 points):
+- **A working guessing game**
+- **Games won**
+- **Average score**
+- **A leaderboard** (at least top 3)
+- **At least three levels**
+- **Current date and time**
 
-| Requirement | Description |
-|--------------|-------------|
-| ✅ Working guessing game | Player can play and win |
-| ✅ Track total wins | Display count in `<p id="wins">` |
-| ✅ Calculate average score | Display in `<p id="avgScore">` |
-| ✅ Leaderboard (top 3) | Update `<li name="leaderboard">` elements |
-| ✅ At least three levels | Easy, Medium, Hard radio buttons |
-| ✅ Display current date and time | Update every second |
-| ✅ Ask for player name | Input, formatted with correct case |
-| ✅ Let user give up | Score = range value |
-| ✅ Show hot/warm/cold feedback | Based on absolute difference |
-| ✅ Rate user performance | “Good”, “OK”, or “Bad” message |
-| ✅ Month name & suffix on date | “May 1st”, “June 2nd”, etc. |
-| ✅ Track round time | Use `getTime()` for each round |
-| ✅ Track fastest game | Display fastest time so far |
-| ✅ Track total time & average time | Show in additional stats area |
+Additional behaviors **(3 points each**):
+- Ask the user for their name, **case it correctly**, and use it in all messages (make them enter something)
+- Let the user **give up** and set their score to the range
+- Tell the user if they are **cold, warm, hot**, etc. (using absolute difference)
+- Tell the user if their score was **good, bad, ok**, etc.
+- **Add month name and suffix** to the date correctly (e.g., March 1st; July 2nd; June 3rd; May 31st)
+- **Update the time every second** (show the seconds)
+- **Keep a timer for the round** (`Date.getTime()`) and **fastest game** played
+- Keep a **timer for all games** and display the **average time per game**
 
----
-
-## 🧪 Automated Testing
-When you push your code to GitHub, the **GitHub Actions** workflow will automatically:
-
-1. Load your `index.html` and `script.js`  
-2. Simulate playing the game using virtual clicks and inputs  
-3. Check whether each required element and function behaves correctly  
-4. Output a **rubric-style grade report** under the “Actions” tab  
-
-You’ll see something like:
-
-| Check | Points | Max | Passed |
-|--------|--------|------|--------|
-| Current date & time shown | 4 | 4 | ✅ |
-| Leaderboard (top 3, ascending) | 8 | 8 | ✅ |
-| Give up sets score to range | 6 | 6 | ❌ |
-| ... | ... | ... | ... |
-
-Your total and percentage will also appear at the top of the report.
+**Above and Beyond (+6 points):** add clearly documented extra features not listed above.
 
 ---
 
-## 📦 Optional Advanced Features (“Above and Beyond”)
-
-Earn up to **+6 bonus points** for creative or unique features such as:
-
-- Animated feedback (color transitions, sound effects, etc.)
-- Streak counter or achievements
-- Local storage leaderboard
-- Hints or difficulty scaling
-- Responsive design with CSS media queries
-
-Mark these elements with an attribute like:
-```html
-<div data-extra>Streak: 3</div>
-```
-
----
-
-## 🧭 Next Steps (24 pts @ 3 pts each)
-The rubric also includes eight “next steps” checks.  
-To earn these, include the following improvements:
-
-| Step | Description |
-|------|--------------|
-| Reset Form | Add `<button id="reset" type="reset">Reset</button>` |
-| Accessibility labels | Every input has a `<label for="...">` |
-| Input validation | Handle invalid or blank guesses gracefully |
-| Responsive layout | Add `<meta name="viewport">` in `<head>` |
-| Semantic HTML | Use `<main>`, `<section>`, or `<footer>` |
-| No console errors | Code runs cleanly |
-| Meaningful commits | Commit messages describe progress |
-| Extra polish | Any thoughtful improvement |
-
----
-
-## 🧠 Tips for Success
-
-- Always **test your game manually** before pushing.  
-- Check that all required IDs and function names are exactly correct.  
-- Use `console.log()` for debugging, then remove before submission.  
-- Commit and push often—each push will re-run the tests automatically.  
-- Use your creativity for bonus points but keep base features intact.
-
----
-
-## ✅ Example Directory Structure
-
-```
-📦 guessing-game/
- ┣ 📜 index.html
- ┣ 📜 script.js
- ┗ 📜 README.md
-```
+## 🧭 Tips for Success
+- Test manually as you build: play a round, verify stats update, try give up, verify leaderboard.
+- Use `console.log()` for debugging.
+- Keep IDs and function names **exact**.
+- For date suffixes, handle `1st, 2nd, 3rd, 4th...`, and the special-case `11th, 12th, 13th`.
 
 ---
 
 ## 🏁 Submission
-1. Complete your project locally or in GitHub Codespaces.  
-2. Commit all files and push to your GitHub repository.  
-3. Wait 1–2 minutes, then open the **Actions** tab.  
-4. Click the latest workflow run to view your automated grade report.  
-
-If any tests fail, read the log to see which feature or ID needs fixing, correct it, and push again.
+1. **Commit and push** your `index.html`, `script.js`, and `README.md` to your GitHub repository.
+2. **Enable GitHub Pages**:
+   - Go to **Repository → Settings → Pages**.
+   - Under **Build and deployment**, choose **Deploy from a branch**.
+   - Select your default branch (usually `main`) and `/ (root)` for the folder.
+   - Click **Save** and wait for the site to publish (you’ll see a link at the top of the Pages section).
+3. **Verify your live page** works: open the GitHub Pages URL and test the game in your browser.
+4. **Submit the GitHub Pages link** to the assignment on **Google Classroom**.
