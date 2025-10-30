@@ -47,40 +47,29 @@ The project relies on specific **IDs** and **element names**. Make sure these ma
 
 ```html
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>JavaScript Number Guessing Game</title>
+    <script src="script.js" defer></script>
   </head>
   <body>
-    <h1>Number Guessing Game</h1>
-
     <p id="date"></p>
 
     <h3>Level</h3>
-    <input type="radio" name="level" id="e" value="3" checked />
-    <label for="e">Easy</label>
-    <input type="radio" name="level" id="m" value="10" />
-    <label for="m">Medium</label>
-    <input type="radio" name="level" id="h" value="100" />
-    <label for="h">Hard</label>
+    <input type="radio" name="level" id="e" value="3" checked><label for="e">Easy</label>
+    <input type="radio" name="level" id="m" value="10"><label for="m">Medium</label>
+    <input type="radio" name="level" id="h" value="100"><label for="h">Hard</label>
 
-    <div style="margin: 0.5rem 0;">
-      <button id="playBtn">Play</button>
-      <button id="giveUpBtn" disabled>Give Up</button>
-    </div>
+    <button id="playBtn">Play</button>
 
-    <h3 id="msg">Select a Level and press Play</h3>
-
-    <input type="text" id="guess" placeholder="Enter your guess" disabled />
+    <h3 id="msg">Select a Level</h3>
+    <input type="text" id="guess">
     <button id="guessBtn" disabled>Guess</button>
+    <button id="giveUp" disabled>Give Up</button>
 
     <h3>Stats</h3>
     <p id="wins">Total wins: 0</p>
-    <p id="avgScore">Average Score: 0</p>
-    <p id="fastest">Fastest Game: —</p>
-    <p id="avgTime">Average Time per Game: —</p>
+    <p id="avgScore">Average Score: </p>
 
     <h3>Leaderboard</h3>
     <ol>
@@ -88,8 +77,6 @@ The project relies on specific **IDs** and **element names**. Make sure these ma
       <li name="leaderboard">100</li>
       <li name="leaderboard">100</li>
     </ol>
-
-    <script src="script.js"></script>
   </body>
 </html>
 ```
