@@ -65,11 +65,13 @@ The project relies on specific **IDs** and **element names**. Make sure these ma
     <h3 id="msg">Select a Level</h3>
     <input type="text" id="guess">
     <button id="guessBtn" disabled>Guess</button>
-    <button id="giveUp" disabled>Give Up</button>
+    <button id="giveUpBtn" disabled>Give Up</button>
 
     <h3>Stats</h3>
     <p id="wins">Total wins: 0</p>
     <p id="avgScore">Average Score: </p>
+    <p id="fastest">Fastest Game: </p>
+    <p id="avgTime">Average Time: </p>
 
     <h3>Leaderboard</h3>
     <ol>
