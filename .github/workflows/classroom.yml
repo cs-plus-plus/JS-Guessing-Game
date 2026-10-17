@@ -413,7 +413,7 @@ jobs:
 
       - id: t_elements
         name: required elements exist
-        uses: classroom-resources/autograding-command-grader@v1
+        uses: cs-plus-plus/autograding-command-grader@v1
         with:
           test-name: required elements exist
           setup-command: echo "ready"
@@ -423,7 +423,7 @@ jobs:
 
       - id: t_listeners
         name: buttons use addEventListener
-        uses: classroom-resources/autograding-command-grader@v1
+        uses: cs-plus-plus/autograding-command-grader@v1
         with:
           test-name: buttons use addEventListener
           setup-command: echo "ready"
@@ -433,7 +433,7 @@ jobs:
 
       - id: t_play
         name: play starts a round
-        uses: classroom-resources/autograding-command-grader@v1
+        uses: cs-plus-plus/autograding-command-grader@v1
         with:
           test-name: play starts a round
           setup-command: echo "ready"
@@ -443,7 +443,7 @@ jobs:
 
       - id: t_feedback
         name: correct guess and high low feedback
-        uses: classroom-resources/autograding-command-grader@v1
+        uses: cs-plus-plus/autograding-command-grader@v1
         with:
           test-name: correct guess and high low feedback
           setup-command: echo "ready"
@@ -453,7 +453,7 @@ jobs:
 
       - id: t_proximity
         name: hot warm cold proximity feedback
-        uses: classroom-resources/autograding-command-grader@v1
+        uses: cs-plus-plus/autograding-command-grader@v1
         with:
           test-name: hot warm cold proximity feedback
           setup-command: echo "ready"
@@ -463,7 +463,7 @@ jobs:
 
       - id: t_name
         name: player name used in messages
-        uses: classroom-resources/autograding-command-grader@v1
+        uses: cs-plus-plus/autograding-command-grader@v1
         with:
           test-name: player name used in messages
           setup-command: echo "ready"
@@ -473,7 +473,7 @@ jobs:
 
       - id: t_wins_avg
         name: wins counter and average score
-        uses: classroom-resources/autograding-command-grader@v1
+        uses: cs-plus-plus/autograding-command-grader@v1
         with:
           test-name: wins counter and average score
           setup-command: echo "ready"
@@ -483,7 +483,7 @@ jobs:
 
       - id: t_leaderboard
         name: leaderboard sorted top 3
-        uses: classroom-resources/autograding-command-grader@v1
+        uses: cs-plus-plus/autograding-command-grader@v1
         with:
           test-name: leaderboard sorted top 3
           setup-command: echo "ready"
@@ -493,7 +493,7 @@ jobs:
 
       - id: t_giveup
         name: give up sets score to range
-        uses: classroom-resources/autograding-command-grader@v1
+        uses: cs-plus-plus/autograding-command-grader@v1
         with:
           test-name: give up sets score to range
           setup-command: echo "ready"
@@ -503,7 +503,7 @@ jobs:
 
       - id: t_date
         name: date with month names and suffixes
-        uses: classroom-resources/autograding-command-grader@v1
+        uses: cs-plus-plus/autograding-command-grader@v1
         with:
           test-name: date with month names and suffixes
           setup-command: echo "ready"
@@ -513,7 +513,7 @@ jobs:
 
       - id: t_livetime
         name: live time updates every second
-        uses: classroom-resources/autograding-command-grader@v1
+        uses: cs-plus-plus/autograding-command-grader@v1
         with:
           test-name: live time updates every second
           setup-command: echo "ready"
@@ -523,7 +523,7 @@ jobs:
 
       - id: t_timers
         name: round timer fastest and average time
-        uses: classroom-resources/autograding-command-grader@v1
+        uses: cs-plus-plus/autograding-command-grader@v1
         with:
           test-name: round timer fastest and average time
           setup-command: echo "ready"
@@ -626,7 +626,7 @@ jobs:
 
       # === Report to Classroom ===
       - name: Report grades
-        uses: classroom-resources/autograding-grading-reporter@v1
+        uses: cs-plus-plus/autograding-grading-reporter@v1
         with:
           runners: 't_elements,t_listeners,t_play,t_feedback,t_proximity,t_name,t_wins_avg,t_leaderboard,t_giveup,t_date,t_livetime,t_timers'
           token: ${{ github.token }}
